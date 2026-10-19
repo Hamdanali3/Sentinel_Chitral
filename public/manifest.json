@@ -1,0 +1,21 @@
+{
+  "name": "Sentinel Chitral",
+  "short_name": "Sentinel",
+  "description": "Glacial Flood Early Warning System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0F4C5C",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
