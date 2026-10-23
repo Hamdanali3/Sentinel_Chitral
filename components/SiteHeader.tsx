@@ -66,11 +66,11 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
         {/* Natural Handcrafted Logo */}
         <Link
           href="/"
-          className="focus:outline-none focus:ring-2 focus:ring-teal-400/50 rounded-lg py-0.5"
+          className="focus:outline-none focus:ring-2 focus:ring-teal-400/50 rounded-lg py-0.5 min-w-0 shrink"
           onClick={() => setMobileMenuOpen(false)}
         >
           <SentinelLogo size="md" lightText={true} />
@@ -116,7 +116,7 @@ export default function SiteHeader() {
         </nav>
 
         {/* Language Switcher & Mobile Hamburger */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <LanguageSwitcher />
 
           <button

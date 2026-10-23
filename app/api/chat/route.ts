@@ -1,11 +1,12 @@
 import { createGroq } from '@ai-sdk/groq';
-import { streamText, convertToModelMessages, stepCountIs } from 'ai';
+import { streamText, convertToModelMessages, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
 import { getCurrentRisks } from "@/lib/risk";
 
 // Initialize Groq provider
+const groqApiKey = (process.env.GROQ_API_KEY ?? "").replace(/^["']|["']$/g, "").trim();
 const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: groqApiKey,
 });
 
 async function performWebSearch(query: string): Promise<string> {
@@ -32,14 +33,14 @@ async function performWebSearch(query: string): Promise<string> {
 
 // Tool definition for internet search
 const tools = {
-  search_internet: {
+  search_internet: tool({
     description:
       'Search the internet for recent news, posts, and updates on glaciers, floods, and activities in Chitral.',
-    parameters: z.object({
+    inputSchema: z.object({
       query: z.string().describe('Search query, e.g. "recent floods in Chitral 2024"'),
     }),
     execute: async ({ query }: { query: string }) => performWebSearch(query),
-  },
+  }),
 };
 
 export async function POST(req: Request) {
@@ -90,13 +91,25 @@ export async function POST(req: Request) {
   ].join("\n");
 
   // Convert UI messages (from useChat) into the Model format expected by streamText
-  const messages = await convertToModelMessages(body.messages as Parameters<typeof convertToModelMessages>[0]);
+  const normalizedMessages = (body.messages as Array<{
+    id?: string;
+    role: "user" | "assistant" | "system";
+    content?: string;
+    parts?: Array<{ type: string; text?: string }>;
+  }>).map((m) => {
+    if (!m.parts && typeof m.content === "string") {
+      return { ...m, parts: [{ type: "text", text: m.content }] };
+    }
+    return m;
+  });
+
+  const messages = await convertToModelMessages(normalizedMessages as Parameters<typeof convertToModelMessages>[0]);
 
   const result = streamText({
     model: groq('qwen/qwen3.8-27b'),
     system: systemPrompt,
     messages,
-    tools: tools as any,
+    tools,
     maxOutputTokens: 800,
     stopWhen: stepCountIs(3),
     onError: (event) => {

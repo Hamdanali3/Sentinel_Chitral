@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import { Language, translations, Translations } from "./translations";
 
 interface LanguageContextType {
@@ -17,21 +17,50 @@ const LanguageContext = createContext<LanguageContextType>({
   isRTL: false,
 });
 
+let listeners: Array<() => void> = [];
+function emitChange() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function getLangSnapshot(): Language {
+  if (typeof window === "undefined") return "en";
+  const saved = localStorage.getItem("sentinel_lang") as Language | null;
+  if (saved === "en" || saved === "ur" || saved === "kw") {
+    return saved;
+  }
+  return "en";
+}
+
+function getLangServerSnapshot(): Language {
+  return "en";
+}
+
+function subscribeLang(listener: () => void) {
+  listeners.push(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners = listeners.filter((l) => l !== listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Language>("en");
+  const lang = useSyncExternalStore(subscribeLang, getLangSnapshot, getLangServerSnapshot);
 
   useEffect(() => {
-    const saved = localStorage.getItem("sentinel_lang") as Language | null;
-    if (saved && (saved === "en" || saved === "ur" || saved === "kw")) {
-      setLangState(saved);
-    }
-  }, []);
+    document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = (newLang: Language) => {
-    setLangState(newLang);
-    localStorage.setItem("sentinel_lang", newLang);
-    document.documentElement.dir = newLang === "en" ? "ltr" : "rtl";
-    document.documentElement.lang = newLang;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sentinel_lang", newLang);
+      document.documentElement.dir = newLang === "en" ? "ltr" : "rtl";
+      document.documentElement.lang = newLang;
+    }
+    emitChange();
   };
 
   const isRTL = lang === "ur" || lang === "kw";

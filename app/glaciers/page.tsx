@@ -8,22 +8,20 @@ import {
   Search,
   Activity,
   MountainSnow,
-  Droplets,
-  ThermometerSun,
-  Layers,
-  Satellite,
-  Compass,
-  AlertTriangle,
-  ShieldCheck,
-  ShieldAlert,
-  Eye,
-  ExternalLink,
-  ChevronRight,
-  Info,
 } from "lucide-react";
 
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+interface SearchResultItem {
+  title?: string;
+  url?: string;
+  description?: string;
+}
+
+interface SearchResponse {
+  results?: SearchResultItem[];
+}
 
 interface GlacierItem {
   id: string;
@@ -39,19 +37,9 @@ interface GlacierItem {
   image: string;
 }
 
-export default function GlacierExplorer() {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeGlacier, setActiveGlacier] = useState<string>("Chiantar");
-
-  const [searchResults, setSearchResults] = useState<any>(null);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const glaciers: GlacierItem[] = [
-    {
-      id: "Chiantar",
+const GLACIERS: GlacierItem[] = [
+  {
+    id: "Chiantar",
       name: "Chiantar Glacier",
       valley: "Broghil / Upper Yarkhun",
       coords: [73.5358, 36.6575],
@@ -117,6 +105,16 @@ export default function GlacierExplorer() {
     },
   ];
 
+export default function GlacierExplorer() {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeGlacier, setActiveGlacier] = useState<string>("Chiantar");
+
+  const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -171,11 +169,14 @@ export default function GlacierExplorer() {
       mapRef.current = map;
       map.addControl(new maplibregl.NavigationControl(), "bottom-right");
 
+      let ro: ResizeObserver | null = null;
+
       map.on("load", () => {
         setMapLoaded(true);
+        map.resize();
 
         // Add custom rendered markers (no raw emojis)
-        glaciers.forEach((g) => {
+        GLACIERS.forEach((g) => {
           const el = document.createElement("div");
           const pinColor = g.threat === "Severe" ? "#DC2626" : g.threat === "High" ? "#EA580C" : "#D97706";
 
@@ -234,6 +235,13 @@ export default function GlacierExplorer() {
             .addTo(map);
         });
       });
+
+      if (mapContainer.current) {
+        ro = new ResizeObserver(() => {
+          map.resize();
+        });
+        ro.observe(mapContainer.current);
+      }
     };
 
     initMap();
@@ -243,7 +251,7 @@ export default function GlacierExplorer() {
     };
   }, []);
 
-  const activeData = glaciers.find((g) => g.id === activeGlacier) || glaciers[0];
+  const activeData = GLACIERS.find((g) => g.id === activeGlacier) || GLACIERS[0];
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] bg-slate-950 text-slate-100 font-sans rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
@@ -281,10 +289,14 @@ export default function GlacierExplorer() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row relative overflow-hidden">
         {/* Map View */}
-        <div className="flex-1 relative min-h-[350px]">
-          <div ref={mapContainer} className="absolute inset-0" />
+        <div className="flex-1 relative min-h-[350px] lg:min-h-0 w-full h-full">
+          <div
+            ref={mapContainer}
+            className="w-full h-full"
+            style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
+          />
           {!mapLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm z-20">
               <div className="flex flex-col items-center gap-2">
@@ -307,7 +319,7 @@ export default function GlacierExplorer() {
 
           {/* Quick Glacier Switcher on bottom of map */}
           <div className="absolute bottom-4 left-4 right-4 z-10 overflow-x-auto flex gap-2 pb-1">
-            {glaciers.map((g) => (
+            {GLACIERS.map((g) => (
               <button
                 key={g.id}
                 onClick={() => {
@@ -399,7 +411,7 @@ export default function GlacierExplorer() {
 
               {!isSearching && searchResults && (
                 <div className="space-y-2">
-                  {searchResults.results?.slice(0, 3).map((item: any, i: number) => (
+                  {searchResults.results?.slice(0, 3).map((item: SearchResultItem, i: number) => (
                     <div key={i} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
                       <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-400 hover:underline block">
                         {item.title}

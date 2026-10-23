@@ -12,8 +12,6 @@ import {
   X,
   Radio,
   Search,
-  MessageSquare,
-  Compass,
 } from "lucide-react";
 
 const SUGGESTED = [
@@ -27,9 +25,37 @@ export default function Chatbot() {
   const { messages, sendMessage, status, error } = useChat();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [unread, setUnread] = useState(0);
+  const [lastReadMessageCount, setLastReadMessageCount] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const unread = isOpen
+    ? 0
+    : Math.max(
+        0,
+        messages.filter(
+          (m, idx) => idx >= lastReadMessageCount && m.role === "assistant"
+        ).length
+      );
+
+  const handleOpen = () => {
+    setIsOpen(true);
+    setLastReadMessageCount(messages.length);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setLastReadMessageCount(messages.length);
+  };
+
+  const handleToggle = () => {
+    if (isOpen) {
+      handleClose();
+    } else {
+      handleOpen();
+    }
+  };
 
   const isThinking =
     status === "submitted" ||
@@ -41,18 +67,7 @@ export default function Chatbot() {
   // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    if (!isOpen && messages.length > 0 && messages.at(-1)?.role === "assistant") {
-      setUnread((n) => n + 1);
-    }
-  }, [messages, isOpen]);
-
-  // Focus input on open
-  useEffect(() => {
-    if (isOpen) {
-      setUnread(0);
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
+  }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +108,7 @@ export default function Chatbot() {
               </div>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/15 transition text-gray-300 hover:text-white"
             >
               <X size={17} />
@@ -226,7 +241,7 @@ export default function Chatbot() {
 
       {/* Modern Floating Action Button (FAB) */}
       <button
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={handleToggle}
         className="group relative bg-gradient-to-r from-[#0F4C5C] via-teal-700 to-[#0A303B] text-white rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-2.5 pl-4 pr-5 py-3 font-bold text-xs border border-teal-400/30"
       >
         <span className="relative flex items-center justify-center">

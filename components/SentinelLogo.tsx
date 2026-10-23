@@ -172,7 +172,7 @@ export default function SentinelLogo({
             Sentinel<span className="text-amber-400 font-extrabold ml-1">Chitral</span>
           </span>
           <span
-            className={`text-[9px] uppercase tracking-[0.2em] font-semibold mt-1 ${
+            className={`text-[9px] uppercase tracking-[0.2em] font-semibold mt-1 hidden sm:block ${
               lightText ? "text-teal-200/90" : "text-teal-800"
             }`}
           >

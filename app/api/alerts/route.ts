@@ -71,7 +71,11 @@ export async function POST(req: NextRequest) {
       response.responses.forEach((result, responseIndex) => {
         if (result.success) return;
         const code = result.error?.code;
-        if (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token") {
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token" ||
+          code === "messaging/mismatched-credential"
+        ) {
           invalidTokenDocs.push(tokenDocs[index + responseIndex].id);
         }
       });
