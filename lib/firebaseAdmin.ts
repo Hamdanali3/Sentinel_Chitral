@@ -71,7 +71,7 @@ function createLazyProxy<T extends object>(getService: () => T, name: string): T
       if (!serviceInstance) {
         serviceInstance = getService();
       }
-      const val = (serviceInstance as any)[prop];
+      const val = Reflect.get(serviceInstance, prop);
       return typeof val === "function" ? val.bind(serviceInstance) : val;
     },
   });
