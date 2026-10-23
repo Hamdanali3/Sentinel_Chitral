@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
   },
   // Turbopack root config to suppress the package-lock.json warning
   turbopack: {
-    root: __dirname,
+    root: process.cwd(),
   },
   // Allow maplibre-gl to be bundled without SSR issues
   webpack: (config) => {
