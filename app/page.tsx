@@ -64,6 +64,7 @@ export default function Home() {
     valleys: ValleyRisk[];
     syncedAt: string;
     demo?: true;
+  } | null>(null);
   const [selectedRouteValley, setSelectedRouteValley] = useState<string>("");
   const [filterMode, setFilterMode] = useState<"all" | "warnings" | "kalash">("all");
 
