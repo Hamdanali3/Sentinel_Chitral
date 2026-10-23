@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/errors";
 import { getCurrentRisks } from "@/lib/risk";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     return NextResponse.json(await getCurrentRisks());

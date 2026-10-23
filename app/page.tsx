@@ -61,8 +61,10 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/risk")
       .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Risk data status: ${response.status}`);
+        }
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
         setRisks(data);
         if (data.valleys && data.valleys.length > 0) {
           setSelectedRouteValley(data.valleys[0].name.replace(" (Kalash)", ""));

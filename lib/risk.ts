@@ -81,13 +81,17 @@ export async function getCurrentRisks(): Promise<{ valleys: ValleyRisk[]; synced
   }
 
   // ── Step 2: Supplement missing valleys from the risk engine (if configured) ─
-  if (process.env.RISK_ENGINE_URL) {
+  const engineUrl = process.env.RISK_ENGINE_URL?.trim();
+  const isLocalhost = engineUrl ? engineUrl.includes("localhost") || engineUrl.includes("127.0.0.1") : false;
+  const shouldQueryEngine = engineUrl && (!isLocalhost || process.env.NODE_ENV !== "production");
+
+  if (shouldQueryEngine) {
     await Promise.all(
       VALLEYS.filter((valley) => !records.has(valley)).map(async (valley) => {
         try {
           const response = await fetch(
-            `${process.env.RISK_ENGINE_URL}/api/valleys/${encodeURIComponent(valley)}/risk`,
-            { signal: AbortSignal.timeout(5000), cache: "no-store" }
+            `${engineUrl}/api/valleys/${encodeURIComponent(valley)}/risk`,
+            { signal: AbortSignal.timeout(3000), cache: "no-store" }
           );
           if (!response.ok) return;
           const result = await response.json();

@@ -46,8 +46,10 @@ export default function AdminDashboard() {
     if (!user) return;
     fetch("/api/risk")
       .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Risk data status: ${response.status}`);
+        }
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
         setRisks(data.valleys);
       })
       .catch((error: unknown) => setRiskError(getErrorMessage(error)));
